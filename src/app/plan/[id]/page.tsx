@@ -9,6 +9,39 @@ import ShareModal from '@/components/plan/ShareModal';
 import { Download, Share, Mail } from 'lucide-react';
 import { analytics } from '@/lib/analytics/analyticsService';
 
+type GeneratedContent = {
+  onePagePlan: {
+    before: {
+      targetMarket: string;
+      message: string;
+      media: string[];
+    };
+    during: {
+      leadCapture: string;
+      leadNurture: string;
+      salesConversion: string;
+    };
+    after: {
+      deliverExperience: string;
+      lifetimeValue: string;
+      referrals: string;
+    };
+  };
+  implementationGuide: {
+    executiveSummary: string;
+    actionPlans: {
+      phase1: string;
+      phase2: string;
+      phase3: string;
+    };
+  };
+  strategicInsights: {
+    strengths: string[];
+    opportunities: string[];
+    risks: string[];
+  };
+};
+
 interface PlanPageProps {
   params: { id: string };
 }
@@ -21,17 +54,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
   const [error, setError] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-      return;
-    }
-
-    if (status === 'authenticated') {
-      fetchPlan();
-    }
-  }, [status, params.id]);
-
   const fetchPlan = async () => {
     try {
       const response = await fetch(`/api/plans/${params.id}`);
@@ -43,16 +65,26 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
       const planData = await response.json();
       setPlan(planData);
       
-      // Track plan view
       if (session?.user?.email) {
         analytics.trackPlanViewed(session.user.email, params.id);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load plan');
+    } catch {
+      setError('Failed to load plan');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (status === 'authenticated') {
+      fetchPlan();
+    }
+  }, [status, params.id, fetchPlan, router]);
 
   const downloadPDF = async () => {
     try {
@@ -72,11 +104,10 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
       a.click();
       window.URL.revokeObjectURL(url);
       
-      // Track PDF download
       if (session?.user?.email) {
         analytics.trackPlanDownloaded(session.user.email, params.id, 'pdf');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to download PDF');
     }
   };
@@ -120,11 +151,14 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
     );
   }
 
-  const { onePagePlan, implementationGuide, strategicInsights } = plan.generatedContent;
+  const generatedContent = typeof plan.generatedContent === 'string' 
+    ? JSON.parse(plan.generatedContent) as GeneratedContent
+    : plan.generatedContent as GeneratedContent;
+  
+  const { onePagePlan, implementationGuide, strategicInsights } = generatedContent;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
@@ -152,12 +186,9 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* One-Page Plan */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">One-Page Marketing Plan</h2>
-              
-              {/* Before Section */}
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-blue-600 mb-4">BEFORE (Prospects)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -182,8 +213,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
                   </div>
                 </div>
               </div>
-
-              {/* During Section */}
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-green-600 mb-4">DURING (Leads)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -201,8 +230,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
                   </div>
                 </div>
               </div>
-
-              {/* After Section */}
               <div>
                 <h3 className="text-xl font-semibold text-purple-600 mb-4">AFTER (Customers)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -221,16 +248,12 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
                 </div>
               </div>
             </div>
-
-            {/* Implementation Guide */}
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Implementation Guide</h2>
-              
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Executive Summary</h3>
                 <p className="text-gray-700">{implementationGuide.executiveSummary}</p>
               </div>
-
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Phase 1 (First 30 Days)</h3>
@@ -247,12 +270,9 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
               </div>
             </div>
           </div>
-
-          {/* Strategic Insights Sidebar */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Strategic Insights</h3>
-              
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold text-green-600 mb-2">Strengths</h4>
@@ -265,7 +285,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
                     ))}
                   </ul>
                 </div>
-
                 <div>
                   <h4 className="font-semibold text-blue-600 mb-2">Opportunities</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
@@ -277,7 +296,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
                     ))}
                   </ul>
                 </div>
-
                 <div>
                   <h4 className="font-semibold text-red-600 mb-2">Key Risks</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
@@ -291,7 +309,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
                 </div>
               </div>
             </div>
-
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Next Steps</h3>
               <div className="space-y-3">
@@ -309,8 +326,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
           </div>
         </div>
       </div>
-
-      {/* Share Modal */}
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}

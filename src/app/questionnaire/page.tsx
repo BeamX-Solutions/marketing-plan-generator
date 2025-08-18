@@ -5,13 +5,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import QuestionnaireStep from '@/components/questionnaire/QuestionnaireStep';
 import ProgressBar from '@/components/questionnaire/ProgressBar';
-import { 
-  BUSINESS_CONTEXT_QUESTIONS, 
-  QUESTIONNAIRE_QUESTIONS, 
-  getQuestionsBySquare,
-  MARKETING_SQUARES 
-} from '@/constants/questionnaire';
-import { BusinessContext, QuestionnaireResponses, Question } from '@/types';
+import { BUSINESS_CONTEXT_QUESTIONS, QUESTIONNAIRE_QUESTIONS } from '@/constants/questionnaire';
+import { BusinessContext, Question } from '@/types';
 import { analytics } from '@/lib/analytics/analyticsService';
 
 const QuestionnairePage = () => {
@@ -19,25 +14,25 @@ const QuestionnairePage = () => {
   const router = useRouter();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentSquare, setCurrentSquare] = useState(0);
-  const [responses, setResponses] = useState<Record<string, any>>({});
+  const [responses, setResponses] = useState<Record<string, string | string[] | number | boolean>>({});
   const [completedSquares, setCompletedSquares] = useState<number[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [startTime] = useState<number>(Date.now());
 
-  // Redirect if not authenticated and track questionnaire start
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
     } else if (status === 'authenticated' && session?.user?.email) {
-      // Track questionnaire start
-      analytics.trackQuestionnaireStart(session.user.email, responses['industry']);
+      analytics.trackQuestionnaireStart(
+        session.user.email,
+        typeof responses['industry'] === 'string' ? responses['industry'] : undefined
+      );
       analytics.identify(session.user.email, {
         business_name: session.user.name || 'Unknown'
       });
     }
-  }, [status, router, session]);
+  }, [status, router, session, responses]);
 
-  // Get all questions in order
   const allQuestions: Question[] = [
     ...BUSINESS_CONTEXT_QUESTIONS,
     ...QUESTIONNAIRE_QUESTIONS
@@ -45,26 +40,23 @@ const QuestionnairePage = () => {
 
   const currentQuestion = allQuestions[currentQuestionIndex];
   
-  // Calculate current square based on question
   useEffect(() => {
     if (currentQuestion) {
       setCurrentSquare(currentQuestion.square);
     }
   }, [currentQuestion]);
 
-  const handleResponseChange = (value: any) => {
+  const handleResponseChange = (value: string | string[] | number | boolean) => {
     setResponses(prev => ({
       ...prev,
       [currentQuestion.id]: value
     }));
 
-    // Auto-save to localStorage
     const updatedResponses = { ...responses, [currentQuestion.id]: value };
     localStorage.setItem('questionnaire_responses', JSON.stringify(updatedResponses));
   };
 
   const handleNext = async () => {
-    // Track progress
     if (session?.user?.email) {
       analytics.trackQuestionnaireProgress(
         session.user.email,
@@ -74,7 +66,6 @@ const QuestionnairePage = () => {
       );
     }
 
-    // Mark current square as completed if we're moving to a different square
     const nextQuestion = allQuestions[currentQuestionIndex + 1];
     if (nextQuestion && nextQuestion.square !== currentQuestion.square) {
       setCompletedSquares(prev => {
@@ -88,14 +79,13 @@ const QuestionnairePage = () => {
     if (currentQuestionIndex < allQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Last question - generate the marketing plan
       const completionTime = Date.now() - startTime;
       if (session?.user?.email) {
         analytics.trackQuestionnaireCompleted(
           session.user.email,
           completionTime,
-          responses['industry'],
-          responses['business-model']
+          typeof responses['industry'] === 'string' ? responses['industry'] : undefined,
+          typeof responses['business-model'] === 'string' ? responses['business-model'] : undefined
         );
       }
       await generateMarketingPlan();
@@ -113,21 +103,51 @@ const QuestionnairePage = () => {
     const generationStartTime = Date.now();
     
     try {
-      // Structure responses according to our types
       const businessContext: Partial<BusinessContext> = {
-        industry: responses['industry'],
-        businessModel: responses['business-model'],
-        companySize: responses['company-size'],
-        yearsInOperation: responses['years-in-operation'],
-        geographicScope: responses['geographic-scope'],
-        primaryChallenges: responses['primary-challenges'],
-        marketingMaturity: responses['marketing-maturity'],
-        marketingBudget: responses['marketing-budget'],
-        timeAvailability: responses['time-availability'],
-        businessGoals: responses['business-goals']
+        industry: typeof responses['industry'] === 'string' ? responses['industry'] : undefined,
+        businessModel: typeof responses['business-model'] === 'string' &&
+          ['B2B', 'B2C', 'B2B2C', 'Marketplace'].includes(responses['business-model'])
+          ? responses['business-model'] as 'B2B' | 'B2C' | 'B2B2C' | 'Marketplace'
+          : undefined,
+        companySize: typeof responses['company-size'] === 'string'
+          ? responses['company-size']
+          : typeof responses['company-size'] === 'number'
+            ? String(responses['company-size'])
+            : undefined,
+        yearsInOperation: typeof responses['years-in-operation'] === 'string'
+          ? responses['years-in-operation']
+          : typeof responses['years-in-operation'] === 'number'
+            ? String(responses['years-in-operation'])
+            : undefined,
+        geographicScope: typeof responses['geographic-scope'] === 'string'
+          ? responses['geographic-scope']
+          : typeof responses['geographic-scope'] === 'number'
+            ? String(responses['geographic-scope'])
+            : undefined,
+        primaryChallenges: Array.isArray(responses['primary-challenges'])
+          ? responses['primary-challenges'] as string[]
+          : undefined,
+        marketingMaturity: 
+          responses['marketing-maturity'] === 'beginner' ||
+          responses['marketing-maturity'] === 'intermediate' ||
+          responses['marketing-maturity'] === 'advanced'
+            ? responses['marketing-maturity']
+            : undefined,
+        marketingBudget: typeof responses['marketing-budget'] === 'string'
+          ? responses['marketing-budget']
+          : typeof responses['marketing-budget'] === 'number'
+            ? String(responses['marketing-budget'])
+            : undefined,
+        timeAvailability: typeof responses['time-availability'] === 'string'
+          ? responses['time-availability']
+          : typeof responses['time-availability'] === 'number'
+            ? String(responses['time-availability'])
+            : undefined,
+        businessGoals: Array.isArray(responses['business-goals'])
+          ? responses['business-goals'] as string[]
+          : undefined
       };
 
-      // Create plan record
       const planResponse = await fetch('/api/plans/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,12 +163,10 @@ const QuestionnairePage = () => {
 
       const plan = await planResponse.json();
       
-      // Track plan generation started
       if (session?.user?.email) {
         analytics.trackPlanGenerationStarted(session.user.email, plan.id);
       }
       
-      // Start the AI generation process
       const generateResponse = await fetch(`/api/plans/${plan.id}/generate`, {
         method: 'POST'
       });
@@ -157,10 +175,8 @@ const QuestionnairePage = () => {
         throw new Error('Failed to generate plan');
       }
 
-      const generateResult = await generateResponse.json();
       const generationTime = Date.now() - generationStartTime;
 
-      // Track plan generation completed
       if (session?.user?.email) {
         analytics.trackPlanGenerationCompleted(
           session.user.email, 
@@ -169,16 +185,14 @@ const QuestionnairePage = () => {
         );
       }
 
-      // Redirect to the results page
       router.push(`/plan/${plan.id}`);
     } catch (error) {
       console.error('Error generating plan:', error);
       
-      // Track plan generation failed
       if (session?.user?.email) {
         analytics.trackPlanGenerationFailed(
           session.user.email, 
-          undefined, // plan ID might not be available
+          undefined,
           error instanceof Error ? error.message : 'Unknown error'
         );
       }
@@ -189,7 +203,6 @@ const QuestionnairePage = () => {
     }
   };
 
-  // Load saved responses on mount
   useEffect(() => {
     const saved = localStorage.getItem('questionnaire_responses');
     if (saved) {
@@ -210,7 +223,7 @@ const QuestionnairePage = () => {
   }
 
   if (!session) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   if (isGenerating) {
@@ -252,7 +265,6 @@ const QuestionnairePage = () => {
         />
       </div>
 
-      {/* Debug info (remove in production) */}
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg text-xs">
           <div>Question: {currentQuestionIndex + 1} / {allQuestions.length}</div>

@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
     const userId = session?.user?.email || body.userId;
 
     // Store analytics event in Claude interactions table for now
-    // In production, you might want a dedicated analytics table
     const analyticsData = {
       event: body.event,
       properties: body.properties || {},
@@ -32,11 +31,9 @@ export async function POST(request: NextRequest) {
       referer: request.headers.get('referer')
     };
 
-    // Store in database - using Claude interactions table for simplicity
-    // You could create a dedicated analytics table for production
+    // Store in database
     if (userId) {
       try {
-        // Try to find user first
         const user = await prisma.user.findUnique({
           where: { email: userId }
         });
@@ -44,19 +41,18 @@ export async function POST(request: NextRequest) {
         if (user) {
           await prisma.claudeInteraction.create({
             data: {
-              planId: body.properties?.plan_id || 'analytics_event',
+              planId: body.properties?.plan_id !== undefined ? String(body.properties?.plan_id) : 'analytics_event',
               interactionType: `analytics_${body.event}`,
-              promptData: analyticsData,
-              claudeResponse: {
+              promptData: JSON.stringify(analyticsData),
+              claudeResponse: JSON.stringify({
                 tracked: true,
                 timestamp: new Date().toISOString()
-              }
+              })
             }
           });
         }
       } catch (dbError) {
         console.warn('Failed to store analytics in database:', dbError);
-        // Continue without failing the request
       }
     }
 
@@ -70,16 +66,13 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error('Analytics tracking error:', error);
-    
-    // Return success even if tracking fails (don't break user experience)
     return NextResponse.json({ success: true });
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
@@ -116,23 +109,49 @@ export async function GET(request: NextRequest) {
 
     // Calculate average generation time for completed plans
     const completedPlansWithTime = user.plans
-      .filter(plan => plan.status === 'completed' && plan.planMetadata?.totalProcessingTime)
-      .map(plan => plan.planMetadata?.totalProcessingTime as number);
+      .filter(plan => {
+        if (plan.status !== 'completed' || !plan.planMetadata) return false;
+        let metadata;
+        try {
+          metadata = typeof plan.planMetadata === 'string' ? JSON.parse(plan.planMetadata) : plan.planMetadata;
+        } catch {
+          return false;
+        }
+        return metadata && typeof metadata.totalProcessingTime === 'number';
+      })
+      .map(plan => {
+        let metadata;
+        try {
+          metadata = typeof plan.planMetadata === 'string' ? JSON.parse(plan.planMetadata) : plan.planMetadata;
+        } catch {
+          return null;
+        }
+        return metadata?.totalProcessingTime as number;
+      })
+      .filter((time): time is number => typeof time === 'number');
 
     const avgGenerationTime = completedPlansWithTime.length > 0
       ? completedPlansWithTime.reduce((sum, time) => sum + time, 0) / completedPlansWithTime.length
       : null;
 
-    const analytics = {
+    const analyticsData = {
       user: {
         id: user.id,
-        email: user.email,
-        businessName: user.businessName,
-        memberSince: user.createdAt,
-        lastActive: user.lastLoginAt
-      },
-      plans: {
-        total: totalPlans,
+        recentPlans: user.plans.slice(0, 5).map(plan => {
+          let metadata;
+          try {
+            metadata = typeof plan.planMetadata === 'string' ? JSON.parse(plan.planMetadata) : plan.planMetadata;
+          } catch {
+            metadata = {};
+          }
+          return {
+            id: plan.id,
+            status: plan.status,
+            createdAt: plan.createdAt,
+            completedAt: plan.completedAt,
+            processingTime: metadata?.totalProcessingTime
+          };
+        }),
         completed: completedPlans,
         inProgress: inProgressPlans,
         failed: failedPlans,
@@ -149,12 +168,21 @@ export async function GET(request: NextRequest) {
         status: plan.status,
         createdAt: plan.createdAt,
         completedAt: plan.completedAt,
-        processingTime: plan.planMetadata?.totalProcessingTime
+        processingTime: (() => {
+          let metadata;
+          try {
+            metadata = typeof plan.planMetadata === 'string'
+              ? JSON.parse(plan.planMetadata)
+              : plan.planMetadata;
+          } catch {
+            metadata = {};
+          }
+          return metadata?.totalProcessingTime;
+        })()
       }))
     };
 
-    return NextResponse.json(analytics);
-
+    return NextResponse.json(analyticsData);
   } catch (error) {
     console.error('Error fetching analytics:', error);
     return NextResponse.json(

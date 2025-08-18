@@ -3,7 +3,7 @@ export interface User {
   email: string;
   businessName?: string;
   industry?: string;
-  profileData?: Record<string, any>;
+  profileData?: Record<string, string | number | boolean>;
   subscriptionStatus: string;
   marketingConsent: boolean;
 }
@@ -21,133 +21,395 @@ export interface BusinessContext {
   businessGoals: string[];
 }
 
-export interface QuestionnaireResponses {
-  // Square 1: Target Market
-  targetMarket: {
-    demographics: Record<string, any>;
-    psychographics: Record<string, any>;
-    painPoints: string[];
-    customerSources: string[];
-    buyingBehavior: Record<string, any>;
-    decisionProcess: Record<string, any>;
-    budgetConstraints: Record<string, any>;
-    communicationChannels: string[];
-    testimonials: string[];
+export interface TargetMarketData {
+  demographics: {
+    age?: string;
+    income?: string;
+    location?: string;
   };
-  
-  // Square 2: Value Proposition
-  valueProposition: {
-    coreProblem: string;
-    uniqueAdvantages: string[];
-    tangibleBenefits: string[];
-    emotionalBenefits: string[];
-    proofPoints: string[];
-    brandPersonality: string[];
-    keyMessages: string[];
-    differentiation: string[];
-    successStories: string[];
+  psychographics: {
+    goals?: string;
+    values?: string[];
+    interests?: string[];
   };
-  
-  // Square 3: Media Channels
-  mediaChannels: {
-    currentChannels: Record<string, any>;
-    digitalPreferences: Record<string, any>;
-    traditionalMarketing: Record<string, any>;
-    contentCreation: Record<string, any>;
-    socialMedia: Record<string, any>;
-    paidAdvertising: Record<string, any>;
-    publicRelations: Record<string, any>;
-    partnerships: Record<string, any>;
-    eventMarketing: Record<string, any>;
+  painPoints: string[];
+  customerSources: string[];
+  buyingBehavior: {
+    decisionProcess?: string;
+    timeline?: string;
+    factors?: string[];
   };
-  
-  // Square 4: Lead Capture
-  leadCapture: {
-    currentMethods: Record<string, any>;
-    websiteOptimization: Record<string, any>;
-    leadMagnets: Record<string, any>;
-    contactCollection: Record<string, any>;
-    landingPages: Record<string, any>;
-    callToActions: Record<string, any>;
-    formOptimization: Record<string, any>;
-    leadQuality: Record<string, any>;
-    tracking: Record<string, any>;
+  decisionProcess: {
+    steps?: string[];
+    timeline?: string;
+    influencers?: string[];
   };
-  
-  // Square 5: Lead Nurturing
-  leadNurturing: {
-    followUpProcesses: Record<string, any>;
-    emailMarketing: Record<string, any>;
-    crmUsage: Record<string, any>;
-    contentMarketing: Record<string, any>;
-    education: Record<string, any>;
-    relationshipBuilding: Record<string, any>;
-    personalization: Record<string, any>;
-    automation: Record<string, any>;
-    community: Record<string, any>;
+  budgetConstraints: {
+    range?: string;
+    sensitivity?: string;
+    factors?: string[];
   };
-  
-  // Square 6: Sales Conversion
-  salesConversion: {
-    salesProcess: Record<string, any>;
-    salesCycle: Record<string, any>;
-    decisionMakers: Record<string, any>;
-    commonObjections: string[];
-    pricingStrategy: Record<string, any>;
-    proposals: Record<string, any>;
-    contracts: Record<string, any>;
-    salesTeam: Record<string, any>;
-    metrics: Record<string, any>;
+  communicationChannels: string[];
+  testimonials: string[];
+}
+
+export interface ValuePropositionData {
+  coreProblem: string;
+  uniqueAdvantages: string[];
+  tangibleBenefits: string[];
+  emotionalBenefits: string[];
+  proofPoints: string[];
+  brandPersonality: string[];
+  keyMessages: string[];
+  differentiation: string[];
+  successStories: string[];
+}
+
+export interface MediaChannelsData {
+  currentChannels: {
+    channel: string;
+    effectiveness: number;
+    budget?: number;
+  }[];
+  digitalPreferences: {
+    channels: string[];
+    budget?: number;
+    experience?: string;
   };
-  
-  // Square 7: Customer Experience
-  customerExperience: {
-    deliveryMethod: Record<string, any>;
-    qualityAssurance: Record<string, any>;
-    onboarding: Record<string, any>;
-    support: Record<string, any>;
-    feedbackCollection: Record<string, any>;
-    problemResolution: Record<string, any>;
-    successMetrics: Record<string, any>;
-    optimization: Record<string, any>;
-    training: Record<string, any>;
+  traditionalMarketing: {
+    channels: string[];
+    effectiveness?: number;
   };
-  
-  // Square 8: Lifetime Value
-  lifetimeValue: {
-    retention: Record<string, any>;
-    upselling: Record<string, any>;
-    subscriptionModel: Record<string, any>;
-    loyaltyPrograms: Record<string, any>;
-    pricingOptimization: Record<string, any>;
-    expansion: Record<string, any>;
-    journeyOptimization: Record<string, any>;
-    renewals: Record<string, any>;
-    revenueOptimization: Record<string, any>;
+  contentCreation: {
+    types: string[];
+    frequency?: string;
+    resources?: string[];
   };
-  
-  // Square 9: Referral System
-  referralSystem: {
-    currentSources: Record<string, any>;
-    advocacyPrograms: Record<string, any>;
-    incentives: Record<string, any>;
-    partnerships: Record<string, any>;
-    wordOfMouth: Record<string, any>;
-    successStories: Record<string, any>;
-    communityBuilding: Record<string, any>;
-    influencers: Record<string, any>;
-    socialProof: Record<string, any>;
+  socialMedia: {
+    platforms: string[];
+    engagement?: string;
+    strategy?: string;
+  };
+  paidAdvertising: {
+    platforms: string[];
+    budget?: number;
+    experience?: string;
+  };
+  publicRelations: {
+    activities: string[];
+    contacts?: string[];
+  };
+  partnerships: {
+    types: string[];
+    current?: string[];
+  };
+  eventMarketing: {
+    types: string[];
+    frequency?: string;
   };
 }
 
+export interface LeadCaptureData {
+  currentMethods: {
+    methods: string[];
+    effectiveness?: number;
+  };
+  websiteOptimization: {
+    conversionRate?: number;
+    improvements?: string[];
+  };
+  leadMagnets: {
+    current: string[];
+    planned?: string[];
+  };
+  contactCollection: {
+    methods: string[];
+    tools?: string[];
+  };
+  landingPages: {
+    count?: number;
+    conversionRate?: number;
+  };
+  callToActions: {
+    types: string[];
+    effectiveness?: number;
+  };
+  formOptimization: {
+    fields: string[];
+    conversionRate?: number;
+  };
+  leadQuality: {
+    scoring?: string;
+    qualification?: string[];
+  };
+  tracking: {
+    tools: string[];
+    metrics?: string[];
+  };
+}
+
+export interface LeadNurturingData {
+  followUpProcesses: {
+    timeline: string;
+    methods: string[];
+    automation?: boolean;
+  };
+  emailMarketing: {
+    frequency: string;
+    types: string[];
+    automation?: boolean;
+  };
+  crmUsage: {
+    system?: string;
+    features: string[];
+  };
+  contentMarketing: {
+    types: string[];
+    frequency?: string;
+  };
+  education: {
+    methods: string[];
+    topics?: string[];
+  };
+  relationshipBuilding: {
+    strategies: string[];
+    touchpoints?: string[];
+  };
+  personalization: {
+    level: string;
+    methods?: string[];
+  };
+  automation: {
+    tools: string[];
+    workflows?: string[];
+  };
+  community: {
+    platforms: string[];
+    engagement?: string;
+  };
+}
+
+export interface SalesConversionData {
+  salesProcess: {
+    steps: string[];
+    timeline?: string;
+  };
+  salesCycle: {
+    length: string;
+    stages?: string[];
+  };
+  decisionMakers: {
+    roles: string[];
+    influence?: string[];
+  };
+  commonObjections: string[];
+  pricingStrategy: {
+    model: string;
+    tiers?: string[];
+    negotiation?: boolean;
+  };
+  proposals: {
+    format: string;
+    components?: string[];
+  };
+  contracts: {
+    process: string;
+    terms?: string[];
+  };
+  salesTeam: {
+    size?: number;
+    roles?: string[];
+  };
+  metrics: {
+    conversionRate?: number;
+    averageDealSize?: number;
+  };
+}
+
+export interface CustomerExperienceData {
+  deliveryMethod: {
+    process: string;
+    timeline?: string;
+  };
+  qualityAssurance: {
+    measures: string[];
+    standards?: string[];
+  };
+  onboarding: {
+    process: string;
+    duration?: string;
+  };
+  support: {
+    channels: string[];
+    hours?: string;
+  };
+  feedbackCollection: {
+    methods: string[];
+    frequency?: string;
+  };
+  problemResolution: {
+    process: string;
+    timeline?: string;
+  };
+  successMetrics: {
+    kpis: string[];
+    targets?: Record<string, number>;
+  };
+  optimization: {
+    methods: string[];
+    frequency?: string;
+  };
+  training: {
+    provided: boolean;
+    methods?: string[];
+  };
+}
+
+export interface LifetimeValueData {
+  retention: {
+    rate?: number;
+    strategies: string[];
+  };
+  upselling: {
+    opportunities: string[];
+    success?: number;
+  };
+  subscriptionModel: {
+    hasSubscription: boolean;
+    renewalRate?: number;
+  };
+  loyaltyPrograms: {
+    programs: string[];
+    participation?: number;
+  };
+  pricingOptimization: {
+    strategies: string[];
+    testing?: boolean;
+  };
+  expansion: {
+    opportunities: string[];
+    revenue?: number;
+  };
+  journeyOptimization: {
+    touchpoints: string[];
+    improvements?: string[];
+  };
+  renewals: {
+    rate?: number;
+    process?: string;
+  };
+  revenueOptimization: {
+    strategies: string[];
+    impact?: number;
+  };
+}
+
+export interface ReferralSystemData {
+  currentSources: {
+    percentage?: number;
+    sources: string[];
+  };
+  advocacyPrograms: {
+    programs: string[];
+    participation?: number;
+  };
+  incentives: {
+    types: string[];
+    effectiveness?: number;
+  };
+  partnerships: {
+    partners: string[];
+    referrals?: number;
+  };
+  wordOfMouth: {
+    strategies: string[];
+    tracking?: boolean;
+  };
+  successStories: {
+    collection: string[];
+    usage?: string[];
+  };
+  communityBuilding: {
+    platforms: string[];
+    engagement?: string;
+  };
+  influencers: {
+    relationships: string[];
+    impact?: string;
+  };
+  socialProof: {
+    types: string[];
+    placement?: string[];
+  };
+}
+
+export interface QuestionnaireResponses {
+  // Square 1: Target Market
+  targetMarket: TargetMarketData;
+  
+  // Square 2: Value Proposition
+  valueProposition: ValuePropositionData;
+  
+  // Square 3: Media Channels
+  mediaChannels: MediaChannelsData;
+  
+  // Square 4: Lead Capture
+  leadCapture: LeadCaptureData;
+  
+  // Square 5: Lead Nurturing
+  leadNurturing: LeadNurturingData;
+  
+  // Square 6: Sales Conversion
+  salesConversion: SalesConversionData;
+  
+  // Square 7: Customer Experience
+  customerExperience: CustomerExperienceData;
+  
+  // Square 8: Lifetime Value
+  lifetimeValue: LifetimeValueData;
+  
+  // Square 9: Referral System
+  referralSystem: ReferralSystemData;
+}
+
 export interface ClaudeAnalysis {
-  businessModelAssessment: Record<string, any>;
-  marketOpportunity: Record<string, any>;
-  competitivePositioning: Record<string, any>;
-  customerAvatarRefinement: Record<string, any>;
+  businessModelAssessment: {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+    threats: string[];
+  };
+  marketOpportunity: {
+    size: string;
+    growth: string;
+    trends: string[];
+    barriers: string[];
+  };
+  competitivePositioning: {
+    competitors: string[];
+    advantages: string[];
+    differentiators: string[];
+  };
+  customerAvatarRefinement: {
+    primaryAvatar: {
+      demographics: Record<string, string>;
+      psychographics: Record<string, string>;
+      painPoints: string[];
+    };
+    secondaryAvatars?: Array<{
+      demographics: Record<string, string>;
+      psychographics: Record<string, string>;
+      painPoints: string[];
+    }>;
+  };
   strategicRecommendations: string[];
   riskFactors: string[];
-  growthPotential: Record<string, any>;
+  growthPotential: {
+    shortTerm: string;
+    longTerm: string;
+    scalability: string;
+    investmentNeeded: string;
+  };
 }
 
 export interface GeneratedContent {
@@ -170,11 +432,15 @@ export interface GeneratedContent {
   };
   implementationGuide: {
     executiveSummary: string;
-    actionPlans: Record<string, any>;
-    timeline: Record<string, any>;
-    resources: Record<string, any>;
-    kpis: Record<string, any>;
-    templates: Record<string, any>;
+    actionPlans: {
+      phase1: string;
+      phase2: string;
+      phase3: string;
+    };
+    timeline: string;
+    resources: string;
+    kpis: string;
+    templates: string;
   };
   strategicInsights: {
     strengths: string[];
@@ -184,8 +450,16 @@ export interface GeneratedContent {
     growthPotential: string;
     risks: string[];
     investments: string[];
-    roi: Record<string, any>;
+    roi: string;
   };
+}
+
+export interface PlanMetadata {
+  totalProcessingTime?: number;
+  generatedAt?: string;
+  version?: string;
+  error?: string;
+  failedAt?: string;
 }
 
 export interface Plan {
@@ -195,20 +469,44 @@ export interface Plan {
   questionnaireResponses: QuestionnaireResponses;
   claudeAnalysis?: ClaudeAnalysis;
   generatedContent?: GeneratedContent;
-  planMetadata?: Record<string, any>;
+  planMetadata?: PlanMetadata;
   status: 'in_progress' | 'analyzing' | 'generating' | 'completed' | 'failed';
   completionPercentage: number;
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  user?: User;
+}
+
+export interface ClaudeInteractionData {
+  businessContext?: BusinessContext;
+  responses?: QuestionnaireResponses;
+  analysis?: ClaudeAnalysis;
+  filename?: string;
+  fileSize?: number;
+  error?: string;
+  emailSent?: boolean;
+  recipientEmail?: string;
+  success?: boolean;
+  message?: string;
+}
+
+export interface ClaudeResponseData {
+  tracked?: boolean;
+  timestamp?: string;
+  success?: boolean;
+  sentAt?: string;
+  emailType?: string;
+  downloadedAt?: string;
+  errorAt?: string;
 }
 
 export interface ClaudeInteraction {
   id: string;
   planId: string;
   interactionType: string;
-  promptData: Record<string, any>;
-  claudeResponse: Record<string, any>;
+  promptData: ClaudeInteractionData;
+  claudeResponse: ClaudeResponseData;
   tokensUsed?: number;
   processingTimeMs?: number;
   createdAt: string;
@@ -232,10 +530,10 @@ export interface Question {
   required: boolean;
   helpText?: string;
   placeholder?: string;
-  validation?: Record<string, any>;
+  validation?: Record<string, string | number | boolean>;
   conditional?: {
     field: string;
     operator: 'equals' | 'includes' | 'greater_than' | 'less_than';
-    value: any;
+    value: string | number | boolean;
   };
 }

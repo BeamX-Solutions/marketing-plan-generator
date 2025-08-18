@@ -53,8 +53,8 @@ export async function POST(
     // Step 1: Analyze business responses with Claude
     console.log('Starting Claude analysis...');
     const analysis = await claudeService.analyzeBusinessResponses(
-      plan.businessContext as any,
-      plan.questionnaireResponses as any
+      plan.businessContext as BusinessContext,
+      plan.questionnaireResponses as QuestionnaireResponses
     );
 
     // Log Claude interaction
@@ -62,11 +62,11 @@ export async function POST(
       data: {
         planId: plan.id,
         interactionType: 'analysis',
-        promptData: {
+        promptData: JSON.stringify({
           businessContext: plan.businessContext,
           responses: plan.questionnaireResponses
-        },
-        claudeResponse: analysis,
+        }),
+        claudeResponse: JSON.stringify(analysis),
         processingTimeMs: Date.now() - startTime
       }
     });
@@ -75,7 +75,7 @@ export async function POST(
     await prisma.plan.update({
       where: { id: planId },
       data: { 
-        claudeAnalysis: analysis,
+        claudeAnalysis: JSON.stringify(analysis),
         status: 'generating',
         completionPercentage: 50
       }
@@ -85,8 +85,8 @@ export async function POST(
     console.log('Generating marketing plan...');
     const generationStartTime = Date.now();
     const generatedContent = await claudeService.generateMarketingPlan(
-      plan.businessContext as any,
-      plan.questionnaireResponses as any,
+      plan.businessContext as BusinessContext,
+      plan.questionnaireResponses as QuestionnaireResponses,
       analysis
     );
 
@@ -95,12 +95,12 @@ export async function POST(
       data: {
         planId: plan.id,
         interactionType: 'generation',
-        promptData: {
+        promptData: JSON.stringify({
           businessContext: plan.businessContext,
           responses: plan.questionnaireResponses,
           analysis: analysis
-        },
-        claudeResponse: generatedContent,
+        }),
+        claudeResponse: JSON.stringify(generatedContent),
         processingTimeMs: Date.now() - generationStartTime
       }
     });
@@ -109,16 +109,16 @@ export async function POST(
     const updatedPlan = await prisma.plan.update({
       where: { id: planId },
       data: {
-        generatedContent: generatedContent,
-        claudeAnalysis: analysis,
+        generatedContent: JSON.stringify(generatedContent),
+        claudeAnalysis: JSON.stringify(analysis),
         status: 'completed',
         completionPercentage: 100,
         completedAt: new Date(),
-        planMetadata: {
+        planMetadata: JSON.stringify({
           totalProcessingTime: Date.now() - startTime,
           generatedAt: new Date().toISOString(),
           version: '1.0'
-        }
+        })
       }
     });
 
@@ -133,8 +133,8 @@ export async function POST(
         businessName: plan.user.businessName || undefined,
         userEmail: plan.user.email,
         planId: plan.id,
-        generatedContent: generatedContent as any,
-        businessContext: plan.businessContext as any,
+        generatedContent: generatedContent,
+        businessContext: plan.businessContext as BusinessContext,
         createdAt: updatedPlan.createdAt.toISOString(),
         downloadUrl: downloadUrl
       };
@@ -146,15 +146,15 @@ export async function POST(
         data: {
           planId: plan.id,
           interactionType: 'email_completion_auto',
-          promptData: { 
+          promptData: JSON.stringify({ 
             emailSent,
             recipientEmail: plan.user.email
-          },
-          claudeResponse: { 
+          }),
+          claudeResponse: JSON.stringify({ 
             success: emailSent,
             sentAt: new Date().toISOString(),
             emailType: 'completion'
-          }
+          })
         }
       });
 
@@ -183,10 +183,10 @@ export async function POST(
         where: { id: params.id },
         data: { 
           status: 'failed',
-          planMetadata: {
+          planMetadata: JSON.stringify({
             error: error instanceof Error ? error.message : 'Unknown error',
             failedAt: new Date().toISOString()
-          }
+          })
         }
       });
     } catch (updateError) {

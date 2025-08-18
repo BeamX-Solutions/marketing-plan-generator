@@ -27,10 +27,10 @@ export async function POST(request: NextRequest) {
         email,
         businessName: businessName || null,
         marketingConsent: true,
-        profileData: JSON.stringify({
+        profileData: {
           registrationDate: new Date().toISOString(),
           source: 'web_signup'
-        })
+        }
       }
     });
 

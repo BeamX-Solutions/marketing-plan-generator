@@ -7,8 +7,8 @@ import Button from '@/components/ui/Button';
 
 interface QuestionnaireStepProps {
   question: Question;
-  value: any;
-  onChange: (value: any) => void;
+  value: string | string[] | number | boolean;
+  onChange: (value: string | string[] | number | boolean) => void;
   onNext: () => void;
   onPrev: () => void;
   canGoNext: boolean;
@@ -28,7 +28,7 @@ const QuestionnaireStep: React.FC<QuestionnaireStepProps> = ({
   isFirst,
   isLast
 }) => {
-  const handleInputChange = (newValue: any) => {
+  const handleInputChange = (newValue: string | string[] | number | boolean) => {
     onChange(newValue);
   };
 

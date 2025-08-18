@@ -51,8 +51,8 @@ export async function POST(
       businessName: plan.user.businessName || undefined,
       userEmail: plan.user.email,
       planId: plan.id,
-      generatedContent: plan.generatedContent as any,
-      businessContext: plan.businessContext as any,
+      generatedContent: plan.generatedContent as GeneratedContent,
+      businessContext: plan.businessContext as BusinessContext,
       createdAt: plan.createdAt.toISOString(),
       downloadUrl: downloadUrl
     };
@@ -96,17 +96,17 @@ export async function POST(
       data: {
         planId: plan.id,
         interactionType: `email_${emailType}`,
-        promptData: { 
+        promptData: JSON.stringify({ 
           action,
           recipientEmail: action === 'share' ? recipientEmail : plan.user.email,
           success,
           message: message || null
-        },
-        claudeResponse: { 
+        }),
+        claudeResponse: JSON.stringify({ 
           success,
           sentAt: new Date().toISOString(),
           emailType
-        }
+        })
       }
     });
 
@@ -130,13 +130,13 @@ export async function POST(
         data: {
           planId: params.id,
           interactionType: 'email_error',
-          promptData: { 
+          promptData: JSON.stringify({ 
             error: error instanceof Error ? error.message : 'Unknown error' 
-          },
-          claudeResponse: { 
+          }),
+          claudeResponse: JSON.stringify({ 
             success: false, 
             errorAt: new Date().toISOString() 
-          }
+          })
         }
       });
     } catch (logError) {

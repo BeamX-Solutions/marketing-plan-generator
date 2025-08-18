@@ -158,7 +158,7 @@ export class ClaudeService {
     businessContext: BusinessContext,
     responses: QuestionnaireResponses,
     existingAnalysis?: ClaudeAnalysis
-  ): Promise<any> {
+  ): Promise<Record<string, string | string[] | Record<string, string>>> {
     try {
       const squarePrompts: Record<number, string> = {
         1: 'Generate detailed target market analysis and customer avatar for marketing square 1',

@@ -75,11 +75,11 @@ export async function PUT(
     const updatedPlan = await prisma.plan.update({
       where: { id: planId },
       data: {
-        businessContext: body.businessContext || existingPlan.businessContext,
-        questionnaireResponses: body.questionnaireResponses || existingPlan.questionnaireResponses,
-        claudeAnalysis: body.claudeAnalysis || existingPlan.claudeAnalysis,
-        generatedContent: body.generatedContent || existingPlan.generatedContent,
-        planMetadata: body.planMetadata || existingPlan.planMetadata,
+        businessContext: body.businessContext ? JSON.stringify(body.businessContext) : existingPlan.businessContext,
+        questionnaireResponses: body.questionnaireResponses ? JSON.stringify(body.questionnaireResponses) : existingPlan.questionnaireResponses,
+        claudeAnalysis: body.claudeAnalysis ? JSON.stringify(body.claudeAnalysis) : existingPlan.claudeAnalysis,
+        generatedContent: body.generatedContent ? JSON.stringify(body.generatedContent) : existingPlan.generatedContent,
+        planMetadata: body.planMetadata ? JSON.stringify(body.planMetadata) : existingPlan.planMetadata,
         status: body.status || existingPlan.status,
         completionPercentage: body.completionPercentage || existingPlan.completionPercentage
       }

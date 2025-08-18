@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import { X, Mail, Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { analytics } from '@/lib/analytics/analyticsService';
 import { useSession } from 'next-auth/react';
 
@@ -201,7 +200,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                   Resend to Yourself
                 </h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  Didn't receive the original email? Click below to resend the completion email to your inbox.
+                  Didn&apos;t receive the original email? Click below to resend the completion email to your inbox.
                 </p>
                 
                 <Button

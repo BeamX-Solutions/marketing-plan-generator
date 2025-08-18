@@ -1,6 +1,6 @@
 export interface AnalyticsEvent {
   event: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, string | number | boolean>;
   userId?: string;
   sessionId?: string;
   timestamp?: string;
@@ -150,7 +150,7 @@ export class AnalyticsService {
   trackFeatureUsed(
     feature: string, 
     userId?: string, 
-    properties?: Record<string, any>
+    properties?: Record<string, string | number | boolean>
   ) {
     this.track('feature_used', {
       user_id: userId,
@@ -188,7 +188,7 @@ export class AnalyticsService {
   }
 
   // Core tracking method
-  private track(eventName: string, properties: Record<string, any> = {}) {
+  private track(eventName: string, properties: Record<string, string | number | boolean> = {}) {
     const event: AnalyticsEvent = {
       event: eventName,
       properties: {
@@ -213,7 +213,7 @@ export class AnalyticsService {
     }
   }
 
-  private sendToGoogleAnalytics(eventName: string, properties: Record<string, any>) {
+  private sendToGoogleAnalytics(eventName: string, properties: Record<string, string | number | boolean>) {
     if (typeof window !== 'undefined' && window.gtag && this.gaId) {
       window.gtag('event', eventName, {
         ...properties,
@@ -244,7 +244,7 @@ export class AnalyticsService {
   }
 
   // Utility method to identify user
-  identify(userId: string, traits: Record<string, any> = {}) {
+  identify(userId: string, traits: Record<string, string | number | boolean> = {}) {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('config', this.gaId, {
         user_id: userId,
@@ -275,7 +275,7 @@ declare global {
     gtag: (
       command: string,
       targetId: string | Date,
-      config?: Record<string, any>
+      config?: Record<string, string | number | boolean>
     ) => void;
   }
 }

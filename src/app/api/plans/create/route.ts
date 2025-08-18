@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     const plan = await prisma.plan.create({
       data: {
         userId: user.id,
-        businessContext: businessContext || {},
-        questionnaireResponses: questionnaireResponses || {},
+        businessContext: JSON.stringify(businessContext || {}),
+        questionnaireResponses: JSON.stringify(questionnaireResponses || {}),
         status: 'in_progress',
         completionPercentage: 0
       }
