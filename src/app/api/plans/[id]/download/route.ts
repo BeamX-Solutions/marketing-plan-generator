@@ -5,14 +5,12 @@ import { Plan, BusinessContext } from '@/types';
 
 const prisma = new PrismaClient();
 
-// Define the expected params type explicitly
-type RouteContext = {
-  params: { id: string };
-};
-
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const planId = context.params.id;
+    const planId = params.id;
 
     // Fetch the plan from the database
     const dbPlan = await prisma.plan.findUnique({
@@ -66,10 +64,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
         'Content-Disposition': `attachment; filename="marketing-plan-${planId}.pdf"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PDF generation error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: `Failed to download plan: ${error.message}` },
+      { error: `Failed to download plan: ${errorMessage}` },
       { status: 500 }
     );
   } finally {
@@ -109,7 +108,7 @@ async function generatePDF(plan: Plan): Promise<Buffer> {
       generatedContent = typeof plan.generatedContent === 'string'
         ? JSON.parse(plan.generatedContent)
         : plan.generatedContent;
-    } catch (error) {
+    } catch {
       reject(new Error('Failed to parse generatedContent'));
       return;
     }

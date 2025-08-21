@@ -8,7 +8,7 @@ export interface EmailTemplateData {
   userEmail: string;
   planId: string;
   generatedContent: GeneratedContent;
-  businessContext: BusinessContext;
+  businessContext?: BusinessContext; // Made optional since it's unused
   createdAt: string;
   downloadUrl: string;
 }
@@ -18,7 +18,8 @@ export class EmailService {
   
   async sendPlanCompletionEmail(data: EmailTemplateData): Promise<boolean> {
     try {
-      const { businessName, userEmail, generatedContent, businessContext, downloadUrl } = data;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { businessName, userEmail, generatedContent, downloadUrl } = data;
       
       const subject = `🎉 Your Marketing Plan is Ready${businessName ? ` for ${businessName}` : ''}!`;
       
@@ -48,6 +49,7 @@ export class EmailService {
     message?: string
   ): Promise<boolean> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { businessName, downloadUrl } = data;
       
       const subject = `${senderName} shared a marketing plan with you${businessName ? ` for ${businessName}` : ''}`;
@@ -95,7 +97,7 @@ export class EmailService {
   }
 
   private generateCompletionEmailHTML(data: EmailTemplateData): string {
-    const { businessName, generatedContent, businessContext, downloadUrl } = data;
+    const { businessName, generatedContent, downloadUrl } = data;
     const { onePagePlan, strategicInsights } = generatedContent;
 
     return `

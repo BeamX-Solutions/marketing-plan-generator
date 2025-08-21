@@ -54,27 +54,6 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
   const [error, setError] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  const fetchPlan = async () => {
-    try {
-      const response = await fetch(`/api/plans/${params.id}`);
-      
-      if (!response.ok) {
-        throw new Error('Plan not found');
-      }
-
-      const planData = await response.json();
-      setPlan(planData);
-      
-      if (session?.user?.email) {
-        analytics.trackPlanViewed(session.user.email, params.id);
-      }
-    } catch {
-      setError('Failed to load plan');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
@@ -82,14 +61,34 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
     }
 
     if (status === 'authenticated') {
+      const fetchPlan = async () => {
+        try {
+          const response = await fetch(`/api/plans/${params.id}`);
+          if (!response.ok) {
+            throw new Error('Plan not found');
+          }
+
+          const planData = await response.json();
+          setPlan(planData);
+
+          if (session?.user?.email) {
+            analytics.trackPlanViewed(session.user.email, params.id);
+          }
+        } catch {
+          setError('Failed to load plan');
+        } finally {
+          setLoading(false);
+        }
+      };
+
       fetchPlan();
     }
-  }, [status, params.id, fetchPlan, router]);
+  }, [status, params.id, router, session?.user?.email]);
 
   const downloadPDF = async () => {
     try {
       const response = await fetch(`/api/plans/${params.id}/download`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
       }
@@ -103,7 +102,7 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      
+
       if (session?.user?.email) {
         analytics.trackPlanDownloaded(session.user.email, params.id, 'pdf');
       }
@@ -154,7 +153,7 @@ const PlanPage: React.FC<PlanPageProps> = ({ params }) => {
   const generatedContent = typeof plan.generatedContent === 'string' 
     ? JSON.parse(plan.generatedContent) as GeneratedContent
     : plan.generatedContent as GeneratedContent;
-  
+
   const { onePagePlan, implementationGuide, strategicInsights } = generatedContent;
 
   return (
